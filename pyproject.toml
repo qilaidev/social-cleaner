@@ -1,0 +1,95 @@
+[project]
+name = "social-cleaner"
+version = "0.1.0"
+description = "One CLI to inspect and clean your own social-media accounts: Bilibili (official web API) and X / Twitter (browser automation), with append-only audit trail, rate limiting and cooperative cancellation."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "qilaidev" }]
+keywords = [
+    "account-cleanup",
+    "social-media",
+    "privacy-tool",
+    "bilibili",
+    "bilibili-cleaner",
+    "bulk-unfollow",
+    "twitter",
+    "x",
+    "x-account-cleaner",
+    "delete-tweets",
+    "bulk-delete-tweets",
+    "playwright",
+    "cli",
+    "self-hosted",
+    "local-first",
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "httpx>=0.25.0,<1.0",
+    "typer>=0.12.0,<1.0",
+    "qrcode>=7.4.0,<9.0",
+    "playwright>=1.45.0,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "respx>=0.20.0",
+    "ruff>=0.6.0",
+]
+
+[project.scripts]
+social-cleaner = "social_cleaner.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/qilaidev/social-cleaner"
+Repository = "https://github.com/qilaidev/social-cleaner"
+Documentation = "https://github.com/qilaidev/social-cleaner#readme"
+Changelog = "https://github.com/qilaidev/social-cleaner/blob/main/CHANGELOG.md"
+Issues = "https://github.com/qilaidev/social-cleaner/issues"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# Scoped to rules that catch real defects rather than style churn:
+# F  pyflakes (undefined names, unused imports)
+# E  pycodestyle errors
+# I  import ordering (keeps diffs small)
+# B  bugbear (mutable defaults, loop-variable capture, ...)
+# ASYNC  blocking calls inside async code — would stall the single event loop
+# UP  outdated syntax (keeps deprecated typing imports from creeping back)
+select = ["E", "F", "I", "B", "ASYNC", "UP"]
+ignore = [
+    "B008",  # Typer's Option()/Argument() defaults in function signatures are the documented idiom.
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402"]

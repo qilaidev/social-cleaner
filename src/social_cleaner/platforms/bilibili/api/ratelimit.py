@@ -1,0 +1,66 @@
+from __future__ import annotations
+
+import asyncio
+import time
+import weakref
+
+from social_cleaner.core.cancellation import raise_if_cancelled
+from social_cleaner.core.retry import sleep_ms
+
+
+class AsyncTokenBucket:
+    """Async token bucket rate limiter.
+
+    A single bucket shared by all callers. ``acquire()`` blocks until a token
+    is available, then consumes it. Default ``burst`` of 1 yields strict
+    spacing of ``1/qps`` seconds between successive calls.
+    """
+
+    def __init__(self, qps: float, burst: int = 1) -> None:
+        if qps <= 0:
+            raise ValueError("qps must be positive")
+        if burst < 1:
+            raise ValueError("burst must be >= 1")
+        self._qps = float(qps)
+        self._burst = burst
+        self._tokens = float(burst)
+        self._last = time.monotonic()
+        self._lock = asyncio.Lock()
+
+    async def acquire(self) -> None:
+        raise_if_cancelled()
+        async with self._lock:
+            raise_if_cancelled()
+            now = time.monotonic()
+            elapsed = now - self._last
+            self._tokens = min(float(self._burst), self._tokens + elapsed * self._qps)
+            self._last = now
+            if self._tokens < 1.0:
+                wait = (1.0 - self._tokens) / self._qps
+                await sleep_ms(wait * 1000.0)
+                now = time.monotonic()
+                elapsed = now - self._last
+                self._tokens = min(float(self._burst), self._tokens + elapsed * self._qps)
+                self._last = now
+            self._tokens -= 1.0
+
+
+_shared_buckets: weakref.WeakKeyDictionary[
+    asyncio.AbstractEventLoop, dict[tuple[float, int], AsyncTokenBucket]
+] = weakref.WeakKeyDictionary()
+
+
+def get_shared_bucket(qps: float, burst: int = 1) -> AsyncTokenBucket:
+    """Return a process-local bucket shared by clients on the same event loop."""
+    loop = asyncio.get_running_loop()
+    buckets = _shared_buckets.get(loop)
+    if buckets is None:
+        buckets = {}
+        _shared_buckets[loop] = buckets
+
+    key = (float(qps), int(burst))
+    bucket = buckets.get(key)
+    if bucket is None:
+        bucket = AsyncTokenBucket(qps=qps, burst=burst)
+        buckets[key] = bucket
+    return bucket

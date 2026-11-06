@@ -1,0 +1,22 @@
+# social-cleaner
+
+> Open-source, local-first CLI and Python SDK (Python 3.10+) to inspect and clean your own social-media accounts: Bilibili through the official web API, X / Twitter through Playwright browser automation. Append-only audit log for every deletion, rate limiting, exponential backoff, and cooperative cancellation. MIT. No hosted service, no telemetry.
+
+Repository: https://github.com/qilaidev/social-cleaner
+
+## Docs
+
+- [README](README.md): overview, install, quick start, safety model
+- [AGENTS.md](AGENTS.md): how an AI agent should drive the tool
+- [docs/bilibili.md](docs/bilibili.md): Bilibili commands, workflow, limits
+- [docs/x.md](docs/x.md): X commands, headless policy, reviewed unfollow, exit codes, selectors
+- [docs/adding-a-platform.md](docs/adding-a-platform.md): contract for new platforms
+
+## Facts
+
+- Install: `pip install social-cleaner` (`playwright install chromium` for X)
+- Entry point: `social-cleaner bilibili …`, `social-cleaner x …`
+- Data dir: `~/.social-cleaner` (credentials, browser profile, exports, run summaries, `audit.jsonl`)
+- Bilibili: 1.5 req/s shared bucket; retries `-352`/`-799`/`-509`/412/429; no batch unfollow; no own-comments API
+- X: only the logged-in user's own posts are deleted; unfollowing is export → classify → human approval → execute; HTTP 429 ⇒ exit code 75, wait, do not re-login
+- Not for: other people's accounts, evading enforcement, bulk engagement

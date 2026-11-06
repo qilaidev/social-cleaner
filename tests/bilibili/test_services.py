@@ -1,0 +1,137 @@
+from __future__ import annotations
+
+from urllib.parse import parse_qs
+
+import httpx
+import pytest
+import respx
+
+from social_cleaner.platforms.bilibili.api.dynamic import DELETE_DYNAMIC_URL, DYNAMICS_URL
+from social_cleaner.platforms.bilibili.api.favorite import (
+    BATCH_DELETE_URL,
+    FOLDERS_URL,
+    RESOURCE_IDS_URL,
+)
+from social_cleaner.platforms.bilibili.api.wbi import NAV_URL
+
+NAV_PAYLOAD = {
+    "code": 0,
+    "data": {
+        "wbi_img": {
+            "img_url": "https://i0.hdslb.com/bfs/wbi/a.png",
+            "sub_url": "https://i0.hdslb.com/bfs/wbi/b.png",
+        }
+    },
+}
+from social_cleaner.platforms.bilibili.api.client import BiliApiClient
+from social_cleaner.platforms.bilibili.api.history import CLEAR_HISTORY_URL
+from social_cleaner.platforms.bilibili.api.relation import FOLLOWINGS_URL, MODIFY_URL
+from social_cleaner.platforms.bilibili.services.cleaner import CleanerService
+
+pytestmark = pytest.mark.asyncio
+
+
+def parse_form(request: httpx.Request) -> dict[str, list[str]]:
+    return parse_qs(request.content.decode())
+
+
+async def test_clear_all_followings(bili_client: BiliApiClient) -> None:
+    service = CleanerService(bili_client)
+    followings_responses = [
+        httpx.Response(
+            200,
+            json={
+                "code": 0,
+                "data": {"list": [{"mid": 1}, {"mid": "2"}, {"mid": None}]},
+            },
+        ),
+        httpx.Response(200, json={"code": 0, "data": {"list": []}}),
+    ]
+    with respx.mock(assert_all_called=True) as router:
+        followings_route = router.get(FOLLOWINGS_URL).mock(side_effect=followings_responses)
+        modify_route = router.post(MODIFY_URL).mock(
+            return_value=httpx.Response(200, json={"code": 0, "data": {"ok": True}})
+        )
+        result = await service.clear_all_followings(123)
+
+    assert result.count == 2
+    assert len(followings_route.calls) == 2
+    assert len(modify_route.calls) == 2
+    form = parse_form(modify_route.calls[0].request)
+    assert form["fid"] == ["1"]
+    assert form["act"] == ["2"]
+
+
+async def test_clear_all_favorites(bili_client: BiliApiClient) -> None:
+    service = CleanerService(bili_client)
+    folders_payload = {
+        "code": 0,
+        "data": {
+            "list": [
+                {"id": "100"},
+                {"id": None},
+                "invalid",
+            ]
+        },
+    }
+    with respx.mock(assert_all_called=True) as router:
+        router.get(FOLDERS_URL).mock(return_value=httpx.Response(200, json=folders_payload))
+        ids_route = router.get(RESOURCE_IDS_URL).mock(
+            return_value=httpx.Response(200, json={"code": 0, "data": {"ids": [1, "2", None]}})
+        )
+        delete_route = router.post(BATCH_DELETE_URL).mock(
+            return_value=httpx.Response(200, json={"code": 0, "data": {"success": True}})
+        )
+        result = await service.clear_all_favorites(123)
+
+    assert result.count == 2
+    assert len(ids_route.calls) == 1
+    form = parse_form(delete_route.calls[0].request)
+    assert form["media_id"] == ["100"]
+    assert form["resources"] == ["1:2,2:2"]
+
+
+async def test_clear_all_dynamics(bili_client: BiliApiClient) -> None:
+    service = CleanerService(bili_client)
+    dynamic_responses = [
+        httpx.Response(
+            200,
+            json={
+                "code": 0,
+                "data": {
+                    "items": [{"id_str": "11"}, {"id": 22}, {"bad": "x"}, "skip"],
+                    "has_more": True,
+                    "offset": "next",
+                },
+            },
+        ),
+        httpx.Response(
+            200,
+            json={
+                "code": 0,
+                "data": {"items": [{"dynamic_id": "33"}], "has_more": False},
+            },
+        ),
+    ]
+    with respx.mock(assert_all_called=True) as router:
+        router.get(NAV_URL).mock(return_value=httpx.Response(200, json=NAV_PAYLOAD))
+        dynamics_route = router.get(DYNAMICS_URL).mock(side_effect=dynamic_responses)
+        delete_route = router.post(DELETE_DYNAMIC_URL).mock(
+            return_value=httpx.Response(200, json={"code": 0, "data": {"ok": True}})
+        )
+        result = await service.clear_all_dynamics(456)
+
+    assert result.count == 3
+    assert len(dynamics_route.calls) == 2
+    assert len(delete_route.calls) == 3
+
+
+async def test_clear_history(bili_client: BiliApiClient) -> None:
+    service = CleanerService(bili_client)
+    with respx.mock(assert_all_called=True) as router:
+        router.post(CLEAR_HISTORY_URL).mock(
+            return_value=httpx.Response(200, json={"code": 0, "data": {"ok": True}})
+        )
+        result = await service.clear_history()
+
+    assert result.count == 1  # 返回 1 表示操作已执行

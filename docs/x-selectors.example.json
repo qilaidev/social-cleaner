@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-09-09",
+  "description": "Override any built-in x.com selector. Keys not listed keep their defaults. Prefer data-testid; fallbacks must never match a button with a different meaning.",
+  "selectors": {
+    "tweetMoreButton": {
+      "primary": "[data-testid='caret']",
+      "fallback": "[aria-label*='更多'][role='button'], [aria-label='More'][role='button']",
+      "description": "The '…' menu on a post"
+    }
+  },
+  "customSelectors": {}
+}

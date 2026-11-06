@@ -1,0 +1,60 @@
+{
+  "delete": {
+    "tweets": true,
+    "replies": true,
+    "retweets": true,
+    "likes": false,
+    "bookmarks": false
+  },
+  "execution": {
+    "max_per_session": 5,
+    "per_batch": 3,
+    "delay_between_actions_ms": 1500,
+    "delay_jitter_ms": 500,
+    "delay_between_batches_ms": 2500,
+    "page_ready_timeout_ms": 4000,
+    "refresh_every_batches": 2
+  },
+  "retry": {
+    "max_attempts": 3,
+    "delay_ms": 5000,
+    "exponential_backoff": true
+  },
+  "following": {
+    "rules": {
+      "keep_handles": [],
+      "drop_handles": [],
+      "keep_keywords": ["ai", "coding", "developer", "编程", "科技"],
+      "drop_keywords": ["airdrop", "giveaway", "casino", "bet", "博彩", "空投", "抽奖", "接推广", "商务合作"],
+      "low_info_candidate": true
+    },
+    "execution": {
+      "min_delay_ms": 6000,
+      "max_delay_ms": 14000,
+      "max_unfollow_per_session": 10,
+      "require_confirm_file": true,
+      "max_consecutive_failures": 3,
+      "cooldown_every_actions": 20,
+      "cooldown_ms": 300000
+    },
+    "safety": {
+      "require_headful_for_execute": true,
+      "stop_on_risk_signals": true,
+      "risk_text_patterns": [
+        "unusual activity", "temporarily restricted", "temporarily limited", "rate limit",
+        "account locked", "account suspended", "verify your account",
+        "账号已锁定", "账号已暂停", "异常活动", "请验证", "访问受限"
+      ]
+    }
+  },
+  "urls": {
+    "login": "https://x.com/i/flow/login",
+    "home": "https://x.com/home",
+    "tweets": "https://x.com/{username}",
+    "tweets_with_replies": "https://x.com/{username}/with_replies",
+    "likes": "https://x.com/{username}/likes",
+    "bookmarks": "https://x.com/i/bookmarks",
+    "following": "https://x.com/{username}/following",
+    "reposts": "https://x.com/{username}/reposts"
+  }
+}

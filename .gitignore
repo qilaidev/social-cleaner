@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local configuration and secrets
+.env
+*.local
+
+# Runtime data. Everything the tool persists lives under SOCIAL_CLEANER_DATA_DIR
+# (default ~/.social-cleaner); if you point it inside the repo, keep it out of git:
+# credentials, browser profiles / cookies, exported followings (third-party
+# personal data), run summaries and the audit trail.
+data/
+browser-data*/
+*.jsonl
+state.json
+run.lock
+
+# ==== 凭证与产物安全网（统一追加，请勿删除）====
+# 目的：任何仓库里新出现的凭证文件默认不进版本库。
+# 注意：gitignore 只管「未跟踪」文件；已跟踪的文件不受影响。
+.env
+.env.*
+!.env.example
+!.env*.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+*.ppk
+secrets.json
+secrets.yaml
+secrets.yml
+secrets.toml
+credentials.json
+credentials.yaml
+service-account*.json
+.netrc
+.pypirc
+*.session
+*.session-journal
+
+# ---- 系统与依赖产物 ----
+.DS_Store
+**/.DS_Store
+Thumbs.db
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
